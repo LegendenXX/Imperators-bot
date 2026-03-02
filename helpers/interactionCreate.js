@@ -2,13 +2,9 @@ const { EmbedBuilder, MessageFlags } = require('discord.js');
 const jobs = require('../jobsConfig.json');
 
 module.exports = (client) => {
-
     client.on('interactionCreate', async (interaction) => {
 
-        // ❗ Nur Select-Menüs behandeln
         if (!interaction.isStringSelectMenu()) return;
-
-        // ❗ Nur unser Job-Menü
         if (interaction.customId !== 'select-job') return;
 
         try {
@@ -16,10 +12,9 @@ module.exports = (client) => {
             const jobData = jobs[selectedJob];
 
             if (!jobData) {
-                // Ephemeral Nachricht bei Fehler
                 return interaction.reply({
                     content: '❌ Job nicht gefunden.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -33,24 +28,35 @@ module.exports = (client) => {
                     { name: '⚖️ Typ', value: jobData.type, inline: true }
                 );
 
-            // ❗ Update Menü, ephemeral geht hier nicht, daher reply
-            await interaction.update({
-                embeds: [embed],
-                components: [] // Dropdown entfernen
-            });
+            // ❗ Ephemeral Reply mit Flags
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    embeds: [embed],
+                    components: [], // Menü entfernen
+                    flags: MessageFlags.Ephemeral
+                });
+            } else {
+                await interaction.followUp({
+                    embeds: [embed],
+                    components: [],
+                    flags: MessageFlags.Ephemeral
+                });
+            }
 
         } catch (err) {
             console.error('Job Select Fehler:', err);
-
-            // ❗ Reply nur, wenn noch keine Antwort erfolgt ist
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
                     content: '❌ Fehler beim Verarbeiten der Auswahl.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
+                });
+            } else {
+                await interaction.followUp({
+                    content: '❌ Fehler beim Verarbeiten der Auswahl.',
+                    flags: MessageFlags.Ephemeral
                 });
             }
         }
 
     });
-
 };
