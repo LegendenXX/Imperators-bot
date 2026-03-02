@@ -38,7 +38,7 @@ const client = new Client({
 client.commands = new Collection();
 
 // === Job Dropdown Listener ===
-require('./helpers/interactionCreate')(client);
+require('./helpers/interactionCreate.js')(client);
 
 // === Commands laden ===
 const commandsPath = path.join(__dirname, 'commands');
