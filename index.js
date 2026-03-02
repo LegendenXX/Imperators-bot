@@ -37,6 +37,9 @@ const client = new Client({
 
 client.commands = new Collection();
 
+// === Job Dropdown Listener ===
+require('./helpers/interactionCreate')(client);
+
 // === Commands laden ===
 const commandsPath = path.join(__dirname, 'commands');
 fs.readdirSync(commandsPath)
@@ -73,12 +76,14 @@ client.on('interactionCreate', async interaction => {
   try {
     if (interaction.user?.bot) return;
 
+    // --- Slash Commands ---
     if (interaction.isChatInputCommand()) {
       const cmd = client.commands.get(interaction.commandName);
       if (!cmd) return;
       await handleInteraction(interaction, db, transactionLog, cmd.execute);
     }
 
+    // --- Autocomplete ---
     else if (interaction.isAutocomplete()) {
       const cmd = client.commands.get(interaction.commandName);
       if (!cmd?.autocomplete) return;
@@ -100,6 +105,7 @@ client.on('interactionCreate', async interaction => {
       await interaction.respond(filtered);
     }
 
+    // --- Button ---
     else if (interaction.isButton()) {
       await handleButtonInteraction(interaction, db, transactionLog);
 
@@ -114,6 +120,7 @@ client.on('interactionCreate', async interaction => {
       }
     }
 
+    // --- Modal ---
     else if (interaction.isModalSubmit()) {
       await handleModalSubmit(interaction, db, transactionLog);
 
