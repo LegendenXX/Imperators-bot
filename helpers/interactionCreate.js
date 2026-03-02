@@ -1,5 +1,5 @@
 const { EmbedBuilder, MessageFlags } = require('discord.js');
-const jobs = require('../jobsConfig.json');
+const jobs = require('../jobsConfig.js');
 
 module.exports = (client) => {
     client.on('interactionCreate', async (interaction) => {
