@@ -1,3 +1,22 @@
 {
-  "guilds": {}
+  "guilds": {
+    "1328769422915145790": {
+      "users": {
+        "528284722384601110": {
+          "id": "528284722384601110",
+          "username": "der.imperator_66",
+          "balance": 10000000,
+          "bank": 0,
+          "job": "Arbeitslos",
+          "lastTransaction": null,
+          "purchases": [],
+          "owned": [],
+          "role": null,
+          "bot": false
+        }
+      },
+      "ownerships": {},
+      "ownershipHistory": []
+    }
+  }
 }
