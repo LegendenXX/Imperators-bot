@@ -1,3 +1,4 @@
+// commands/jobs.js
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } = require('discord.js');
 const jobs = require('../jobsConfig.js');
 
@@ -7,9 +8,7 @@ module.exports = {
         .setDescription('Zeige alle verfügbaren Jobs'),
 
     async execute(interaction) {
-
         try {
-            // ❗ Baue Dropdown-Menü mit allen Jobs
             const menu = new StringSelectMenuBuilder()
                 .setCustomId('select-job')
                 .setPlaceholder('Wähle einen Job aus...')
@@ -23,7 +22,6 @@ module.exports = {
 
             const row = new ActionRowBuilder().addComponents(menu);
 
-            // ❗ Reply mit Flags für Ephemeral
             await interaction.reply({
                 content: 'Bitte wähle einen Job aus:',
                 components: [row],
@@ -33,7 +31,6 @@ module.exports = {
         } catch (err) {
             console.error('Jobs Command Fehler:', err);
 
-            // ❗ Fehler als Ephemeral Reply
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
                     content: '❌ Fehler beim Laden der Jobs.',

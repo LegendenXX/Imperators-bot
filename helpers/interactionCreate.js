@@ -1,9 +1,9 @@
+// interactionCreate.js
 const { EmbedBuilder, MessageFlags } = require('discord.js');
-const jobs = require('../jobsConfig.js');
+const jobs = require('./jobsConfig.js'); // Pfad angepasst
 
 module.exports = (client) => {
     client.on('interactionCreate', async (interaction) => {
-
         if (!interaction.isStringSelectMenu()) return;
         if (interaction.customId !== 'select-job') return;
 
@@ -28,11 +28,10 @@ module.exports = (client) => {
                     { name: '⚖️ Typ', value: jobData.type, inline: true }
                 );
 
-            // ❗ Ephemeral Reply mit Flags
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
                     embeds: [embed],
-                    components: [], // Menü entfernen
+                    components: [],
                     flags: MessageFlags.Ephemeral
                 });
             } else {
@@ -46,17 +45,10 @@ module.exports = (client) => {
         } catch (err) {
             console.error('Job Select Fehler:', err);
             if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({
-                    content: '❌ Fehler beim Verarbeiten der Auswahl.',
-                    flags: MessageFlags.Ephemeral
-                });
+                await interaction.reply({ content: '❌ Fehler beim Verarbeiten der Auswahl.', ephemeral: true });
             } else {
-                await interaction.followUp({
-                    content: '❌ Fehler beim Verarbeiten der Auswahl.',
-                    flags: MessageFlags.Ephemeral
-                });
+                await interaction.followUp({ content: '❌ Fehler beim Verarbeiten der Auswahl.', ephemeral: true });
             }
         }
-
     });
 };
