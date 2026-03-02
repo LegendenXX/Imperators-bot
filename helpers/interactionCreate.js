@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, MessageFlags } = require('discord.js');
 const jobs = require('../jobsConfig.json');
 
 module.exports = (client) => {
@@ -16,9 +16,10 @@ module.exports = (client) => {
             const jobData = jobs[selectedJob];
 
             if (!jobData) {
-                return interaction.update({
+                // Ephemeral Nachricht bei Fehler
+                return interaction.reply({
                     content: '❌ Job nicht gefunden.',
-                    components: []
+                    ephemeral: true
                 });
             }
 
@@ -32,14 +33,17 @@ module.exports = (client) => {
                     { name: '⚖️ Typ', value: jobData.type, inline: true }
                 );
 
+            // ❗ Update Menü, ephemeral geht hier nicht, daher reply
             await interaction.update({
                 embeds: [embed],
-                components: []
+                components: [] // Dropdown entfernen
             });
 
         } catch (err) {
             console.error('Job Select Fehler:', err);
-            if (!interaction.replied) {
+
+            // ❗ Reply nur, wenn noch keine Antwort erfolgt ist
+            if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
                     content: '❌ Fehler beim Verarbeiten der Auswahl.',
                     ephemeral: true

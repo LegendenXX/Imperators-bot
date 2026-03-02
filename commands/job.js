@@ -1,43 +1,71 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
-const jobsConfig = require('../jobsConfig.json');
+const { EmbedBuilder, MessageFlags } = require('discord.js');
+const jobs = require('../jobsConfig.json');
 
-module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('jobs')
-        .setDescription('Übersicht aller Berufe'),
+module.exports = (client) => {
 
-    async execute(interaction) {
+    client.on('interactionCreate', async (interaction) => {
 
-        const embed = new EmbedBuilder()
-            .setTitle('💼 Job-Zentrum')
-            .setColor(0x3498db)
-            .setDescription('Wähle einen Job aus dem Menü unten.');
+        // ❗ Nur Select-Menüs behandeln
+        if (!interaction.isStringSelectMenu()) return;
 
-        const menu = new StringSelectMenuBuilder()
-            .setCustomId('select-job')
-            .setPlaceholder('💼 Wähle deinen Job');
+        // ❗ Nur unser Job-Menü
+        if (interaction.customId !== 'select-job') return;
 
-        for (const [id, data] of Object.entries(jobsConfig)) {
+        try {
+            const selectedJob = interaction.values[0];
+            const jobData = jobs[selectedJob];
 
-            embed.addFields({
-                name: data.name,
-                value: `💰 ${data.lohn}€ | 📈 Level ${data.req}`,
-                inline: true
-            });
+            if (!jobData) {
+                // Ephemeral Nachricht bei Fehler
+                return interaction.reply({
+                    content: '❌ Job nicht gefunden.',
+                    flags: MessageFlags.Ephemeral
+                });
+            }
 
-            menu.addOptions({
-                label: data.name,
-                description: `Lohn: ${data.lohn}€ | Level: ${data.req}`,
-                value: id
-            });
+            const embed = new EmbedBuilder()
+                .setTitle(`💼 ${jobData.name}`)
+                .setColor(0x2ecc71)
+                .addFields(
+                    { name: '💰 Lohn', value: `${jobData.lohn}€`, inline: true },
+                    { name: '⭐ XP', value: `${jobData.xp}`, inline: true },
+                    { name: '📈 Benötigtes Level', value: `${jobData.req}`, inline: true },
+                    { name: '⚖️ Typ', value: jobData.type, inline: true }
+                );
+
+            // ❗ Reply statt update, damit ephemeral funktioniert
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    embeds: [embed],
+                    components: [], // Menü entfernen
+                    flags: MessageFlags.Ephemeral
+                });
+            } else {
+                // Falls schon geupdatet, nutze followUp
+                await interaction.followUp({
+                    embeds: [embed],
+                    components: [],
+                    flags: MessageFlags.Ephemeral
+                });
+            }
+
+        } catch (err) {
+            console.error('Job Select Fehler:', err);
+
+            // ❗ Reply nur, wenn noch keine Antwort erfolgt ist
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Fehler beim Verarbeiten der Auswahl.',
+                    flags: MessageFlags.Ephemeral
+                });
+            } else {
+                await interaction.followUp({
+                    content: '❌ Fehler beim Verarbeiten der Auswahl.',
+                    flags: MessageFlags.Ephemeral
+                });
+            }
         }
 
-        const row = new ActionRowBuilder().addComponents(menu);
+    });
 
-        await interaction.reply({
-            embeds: [embed],
-            components: [row],
-            ephemeral: true
-        });
-    }
 };
