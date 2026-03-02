@@ -2,7 +2,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const jobs = require('../jobsConfig.js');
+const jobs = require('../helpers/jobsConfig.js');
 
 module.exports = {
     data: new SlashCommandBuilder().setName('work').setDescription('Schicht beginnen'),

@@ -1,6 +1,6 @@
 // commands/jobs.js
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } = require('discord.js');
-const jobs = require('../jobsConfig.js');
+const jobs = require('../helpers/jobsConfig.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
