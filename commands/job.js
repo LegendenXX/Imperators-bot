@@ -6,7 +6,7 @@ module.exports = {
         .setName('jobs')
         .setDescription('Übersicht aller Berufe'),
     async execute(interaction) {
-        const jobs = JSON.parse(fs.readFileSync('./config_jobdb.json', 'utf8'));
+        const jobs = JSON.parse(fs.readFileSync('./jobdb.json', 'utf8'));
         const embed = new EmbedBuilder()
             .setTitle('💼 Job-Zentrum')
             .setColor(0x3498db);
