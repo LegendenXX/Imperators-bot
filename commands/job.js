@@ -4,7 +4,7 @@ const jobs = require('../helpers/jobsConfig.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('Jobs')
+        .setName('jobs')
         .setDescription('alle verfügbaren Jobs'),
 
     async execute(interaction) {
