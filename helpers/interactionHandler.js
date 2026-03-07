@@ -1,43 +1,17 @@
+// helpers/interactionHandler.js
 const { MessageFlags } = require('discord.js');
 
 /**
  * Zentrale Funktion für Slash Commands
- * 
- * Fängt ALLE Fehler ab und lässt NIEMALS einen Fehler zum Bot durchdringen.
- * Der Bot bleibt immer stabil, egal was passiert.
- *
- * @param {CommandInteraction} interaction
- * @param {Object} db
- * @param {Object|null} transactionLog
- * @param {Function} callback  async (interaction, db, transactionLog) => result
- *
- * result = {
- *   embeds?: [],
- *   content?: string,
- *   components?: [],
- *   ephemeral?: boolean
- * }
  */
 async function handleInteraction(interaction, db, transactionLog, callback) {
   try {
-    // 🛡️ Harte Absicherung
     if (typeof callback !== 'function') {
-      console.error(`❌ handleInteraction: callback ist keine Funktion (${typeof callback})`);
+      console.error(`❌ handleInteraction: callback ist keine Funktion`);
       return safeErrorReply(interaction, '❌ Interner Fehler: Command konnte nicht ausgeführt werden.');
     }
 
-    // ⏳ Nur EINMAL deferReply – mit Timeout-Schutz
-    if (!interaction.replied && !interaction.deferred) {
-      try {
-        await interaction.deferReply();
-      } catch (deferErr) {
-        console.error('⚠️ deferReply fehlgeschlagen:', deferErr.message);
-        // Interaction ist möglicherweise abgelaufen – nichts mehr tun
-        return;
-      }
-    }
-
-    // ▶️ Command ausführen mit Timeout-Schutz (3 Minuten max)
+    // ▶️ Command ausführen mit Timeout (3 Minuten max)
     let result;
     try {
       result = await Promise.race([
@@ -47,33 +21,50 @@ async function handleInteraction(interaction, db, transactionLog, callback) {
         ),
       ]);
     } catch (cmdErr) {
-      console.error(`❌ Command-Fehler (${interaction.commandName}):`, cmdErr.message || cmdErr);
-      return safeErrorReply(interaction, `❌ Fehler beim Ausführen von \`/${interaction.commandName}\`: ${cmdErr.message || 'Unbekannter Fehler'}`);
+      console.error(`❌ Command-Fehler (${interaction.commandName}):`, cmdErr);
+      return safeErrorReply(
+        interaction,
+        `❌ Fehler beim Ausführen von \`/${interaction.commandName}\`: ${cmdErr.message || 'Unbekannter Fehler'}`
+      );
     }
 
-    // Command hat selbst geantwortet
     if (!result) return;
 
-    const options = {};
+    const ephemeral = result.ephemeral || false; // ✅ Hier wird nun korrekt gelesen
 
+    // ⏳ DeferReply nur, wenn noch nicht gesendet
+    if (!interaction.replied && !interaction.deferred) {
+      try {
+        await interaction.deferReply({ ephemeral });
+      } catch (deferErr) {
+        console.error('⚠️ deferReply fehlgeschlagen:', deferErr.message);
+        return;
+      }
+    }
+
+    const options = {};
     if (result.content) options.content = result.content;
     if (result.embeds) options.embeds = result.embeds;
     if (result.components) options.components = result.components;
 
-    // ✅ Ephemeral-Flag setzen (nach deferReply nur eingeschränkt möglich)
-    if (result.ephemeral === true) {
-      options.flags = MessageFlags.Ephemeral;
-    }
+    // ✅ Ephemeral Flag korrekt setzen
+    if (ephemeral) options.flags = MessageFlags.Ephemeral;
 
-    // ✏️ Antwort bearbeiten
+    // ✏️ Antwort senden oder bearbeiten
     try {
-      await interaction.editReply(options);
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply(options);
+      } else {
+        await interaction.reply(options);
+      }
     } catch (editErr) {
       console.error('⚠️ editReply fehlgeschlagen:', editErr.message);
+      try {
+        await interaction.followUp({ content: '⚠️ Fehler beim Senden der Antwort.', ephemeral: true });
+      } catch {}
     }
 
   } catch (err) {
-    // 🛡️ Äußerer Catch – Letzte Verteidigung, verhindert Bot-Crash
     console.error('❌ Schwerer Interaktionsfehler (gefangen, Bot läuft weiter):', err);
     await safeErrorReply(interaction, '❌ Ein unerwarteter Fehler ist aufgetreten.');
   }
@@ -81,24 +72,17 @@ async function handleInteraction(interaction, db, transactionLog, callback) {
 
 /**
  * Sicher eine Fehlermeldung an den User senden.
- * Fängt alle möglichen Fehler ab und lässt NIE etwas durchdringen.
  */
 async function safeErrorReply(interaction, message) {
   try {
-    const errorMessage = {
-      content: message,
-      flags: MessageFlags.Ephemeral,
-    };
-
     if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply(errorMessage);
+      await interaction.reply({ content: message, ephemeral: true });
     } else if (interaction.deferred && !interaction.replied) {
-      await interaction.editReply(errorMessage);
+      await interaction.editReply({ content: message, ephemeral: true });
     } else {
-      await interaction.followUp(errorMessage);
+      await interaction.followUp({ content: message, ephemeral: true });
     }
   } catch (sendErr) {
-    // Letzter Catch – nur loggen, NIEMALS werfen
     console.error('⚠️ Konnte Fehlermeldung nicht senden (Interaction abgelaufen?):', sendErr.message);
   }
 }

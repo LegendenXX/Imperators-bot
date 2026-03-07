@@ -5,22 +5,28 @@ const logPath = path.join(__dirname, 'transactionLog.json');
 
 let transactionLog = { guilds: {} };
 
-// === Log Speicher ===
+// === Log laden ===
 function loadTransactionLog() {
   if (fs.existsSync(logPath)) {
     try {
       const raw = fs.readFileSync(logPath, 'utf8');
       transactionLog = JSON.parse(raw);
+
+      if (!transactionLog.guilds) {
+        transactionLog.guilds = {};
+      }
+
     } catch (err) {
       console.error('❌ Fehler beim Laden des TransactionLogs:', err);
       transactionLog = { guilds: {} };
     }
   }
+
   console.log('✅ TransactionLog erfolgreich geladen');
 }
 
 /**
- * Speichere TransactionLog in die Datei
+ * Log speichern
  */
 function saveTransactionLog() {
   try {
@@ -31,19 +37,32 @@ function saveTransactionLog() {
 }
 
 /**
- * Füge eine neue Transaktion hinzu
- * @param {string} guildId 
- * @param {string} userId 
- * @param {'deposit'|'withdraw'} type 
- * @param {number} amount 
- * @param {number} balance 
- * @param {number} bank 
+ * Guild sicherstellen
  */
-function addTransaction(guildId, userId, type, amount, balance, bank) {
-  if (!transactionLog.guilds[guildId]) transactionLog.guilds[guildId] = {};
+function ensureGuild(guildId) {
+  if (!transactionLog.guilds[guildId]) {
+    transactionLog.guilds[guildId] = {};
+  }
+}
+
+/**
+ * User sicherstellen
+ */
+function ensureUser(guildId, userId) {
+  ensureGuild(guildId);
+
   if (!Array.isArray(transactionLog.guilds[guildId][userId])) {
     transactionLog.guilds[guildId][userId] = [];
   }
+}
+
+/**
+ * Neue Transaktion hinzufügen
+ */
+function addTransaction(guildId, userId, type, amount, balance, bank) {
+
+  ensureUser(guildId, userId);
+
   transactionLog.guilds[guildId][userId].push({
     type,
     amount,
@@ -51,17 +70,23 @@ function addTransaction(guildId, userId, type, amount, balance, bank) {
     bank,
     date: Date.now(),
   });
+
   saveTransactionLog();
 }
 
 /**
- * Hole die letzte Transaktion eines Nutzers
- * @param {string} guildId 
- * @param {string} userId 
+ * Letzte Transaktion holen
  */
 function getLastTransaction(guildId, userId) {
-  const txList = transactionLog.guilds[guildId]?.[userId];
-  if (!Array.isArray(txList) || txList.length === 0) return null;
+
+  ensureUser(guildId, userId);
+
+  const txList = transactionLog.guilds[guildId][userId];
+
+  if (!Array.isArray(txList) || txList.length === 0) {
+    return null;
+  }
+
   return txList[txList.length - 1];
 }
 

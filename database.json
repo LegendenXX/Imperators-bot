@@ -5,14 +5,24 @@
         "528284722384601110": {
           "id": "528284722384601110",
           "username": "der.imperator_66",
-          "balance": 1000000,
-          "bank": 10000000,
-          "job": "Arbeitslos",
-          "lastTransaction": null,
+          "balance": 9900,
+          "bank": 0,
+          "job": "Bäcker Lehrling",
+          "lastTransaction": {
+            "guildId": "1328769422915145790",
+            "userId": "528284722384601110",
+            "type": "deposit",
+            "amount": 100,
+            "balance": 9900,
+            "bank": 100,
+            "date": 1772800646305
+          },
           "purchases": [],
           "owned": [],
           "role": null,
-          "bot": false
+          "bot": false,
+          "xp": 0,
+          "level": 1
         }
       },
       "ownerships": {},
